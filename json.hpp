@@ -97,7 +97,7 @@ public:
             return parse(std::string(in), err);
         else{
             err = "null input";
-            return nullptr;
+            return Json(nullptr);
         }
     }
 
@@ -108,20 +108,23 @@ private:
 
 class JsonValue{
 protected:
+    friend class Json;
+    friend class JsonInt;
+    friend class JsonDouble;
     virtual Json::JsonType type() const = 0;
     virtual bool equals(const JsonValue *other) const = 0;
     virtual bool less(const JsonValue *other) const = 0;
-    virtual void serialize(std::string& other) const = 0;
+    virtual void serialize(std::string& out) const = 0;
 
     virtual double double_value() const;
     virtual int int_value() const;
-    virtual bool_value() const;
+    virtual bool bool_value() const;
     virtual const std::string &string_value() const;
     virtual const Json::array &array_value() const;
     virtual const Json::object &object_value() const;
 
     virtual const Json &operator[](size_t i) const;
-    virtual const Json &operator[](const std::string ket) const;
+    virtual const Json &operator[](const std::string key) const;
 
     virtual ~JsonValue(){}
     JsonValue(){}
