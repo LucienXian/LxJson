@@ -1,4 +1,5 @@
 #include "json.hpp"
+#include <cstdio>
 #include <stdexcept> //for runtime error
 
 namespace lxjson{
@@ -10,10 +11,22 @@ using std::map;
 static const Json json_null;
 
 //todo:
-static void serialize(std::nullptr_t, string &out){}
-static void serialize(int values, string &out){}
-static void serialize(double values, string &out){}
-static void serialize(bool values, string &out){}
+static void serialize(std::nullptr_t, string &out){
+    out+="null";
+}
+static void serialize(int values, string &out){
+    char c[32];
+    snprintf(c, sizeof(c), "%d", values);
+    out += c;
+}
+static void serialize(double values, string &out){
+    char c[32];
+    snprintf(c, sizeof(c), "%.17g", values);
+    out += c;
+}
+static void serialize(bool values, string &out){
+    out += values? "true":"false";
+}
 static void serialize(const string &values, string &out){}
 static void serialize(const Json::array &values, string &out){}
 static void serialize(const Json::object &values, string &out){}
@@ -21,7 +34,7 @@ static void serialize(const Json::object &values, string &out){}
 //JsonValue
 double JsonValue::double_value() const               {throw std::runtime_error("not a number!");}
 int JsonValue::int_value() const                     {throw std::runtime_error("not a number!");}
-const string &JsonValue::string_value() const         {throw std::runtime_error("not a string!");}
+const string &JsonValue::string_value() const        {throw std::runtime_error("not a string!");}
 bool JsonValue::bool_value() const                   {throw std::runtime_error("not a boolean!");}
 const Json::array &JsonValue::array_value() const    {throw std::runtime_error("not a array!");}
 const Json::object &JsonValue::object_value() const  {throw std::runtime_error("not a object!");}
@@ -225,10 +238,11 @@ void Json::serialize(std::string &out) const{
 
 //todo:
 class Parser;
-
+/*
 Json Json::parse(const string &in, string &err) {
     try {
-        Parser p(in);
+        int i=0;
+        //Parser p(in);
         //return p.parse();
     } catch (std::runtime_error& e) {
         //std::runtime_error& e;
@@ -237,7 +251,7 @@ Json Json::parse(const string &in, string &err) {
     }
 
 }
-
+*/
 
 
 }
