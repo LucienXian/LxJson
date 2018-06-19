@@ -10,4 +10,5 @@
 * std::move
 * nullptr_t
 * runtime_error
+* noexcept
 

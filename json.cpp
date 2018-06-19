@@ -27,9 +27,66 @@ static void serialize(double values, string &out){
 static void serialize(bool values, string &out){
     out += values? "true":"false";
 }
-static void serialize(const string &values, string &out){}
-static void serialize(const Json::array &values, string &out){}
-static void serialize(const Json::object &values, string &out){}
+static void serialize(const string &values, string &out){
+    out += "\"";
+    for(auto e : values){
+        switch(e){
+            case '\"':
+                out += "\\\"";
+                break;
+            case '\\':
+                out += "\\\\";
+                break;
+            case '\b':
+                out += "\\b";
+                break;
+            case '\f':
+                out += "\\f";
+                break;
+            case '\n':
+                out += "\\n";
+                break;
+            case '\r':
+                out += "\\r";
+                break;
+            case '\t':
+                out += "\\t";
+                break;
+            default:
+                if (static_cast<unsigned char>(e) < 0x20) {
+                    char buf[7];
+                    sprintf(buf, "\\u%04X", e);
+                    out += buf;
+                } 
+                else
+                    out += e;
+        }
+    }
+    out += "\"";
+}
+static void serialize(const Json::array &values, string &out){
+    bool isFirst = true;
+    out += "[";
+    for (auto &value: values){
+        if (!isFirst) out += ", ";
+        value.serialize(out);
+        isFirst = false;
+    }
+    out += "]";
+}
+static void serialize(const Json::object &values, string &out){
+    bool isFirst = true;
+    out += "{";
+    for (const std::pair<string, Json> &value : values){
+        if (!isFirst) 
+            out += ", ";
+        serialize(value.first, out);
+        out += ": ";
+        value.second.serialize(out);
+        isFirst = false;
+    }
+    out += "}";
+}
 
 //JsonValue
 double JsonValue::double_value() const               {throw std::runtime_error("not a number!");}
