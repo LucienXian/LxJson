@@ -5,21 +5,15 @@
 #include <cassert>
 
 #define JSON11_TEST_ASSERT(b) assert(b)
+#define TEST_OBJ_AND_ARRAY test1()
+#define TEST_PARSE_NULL test2("null", 1)
+#define TEST_PARSE_BOOL1 test2("true", 2)
+#define TEST_PARSE_BOOL2 test2("false", 2)
 
 using namespace lxjson;
 
 
-int main()
-{
-    Json js("asdwq1");
-    JSON11_TEST_ASSERT(js.is_string());
-    std::string out;
-    std::map<std::string, Json> m1 { { "k1", js } };
-
-    Json my_json(m1);
-    my_json.serialize(out);
-    JSON11_TEST_ASSERT(out=="{\"k1\": \"asdwq1\"}");
-
+void test1(){
     //test object & array
     std::string out_arr, out_obj;
     Json j_arr = Json(Json::array{Json(1), Json(2), Json(3)});
@@ -34,5 +28,38 @@ int main()
     std::cout << out_arr << std::endl;
     JSON11_TEST_ASSERT(out_obj=="{\"key1\": \"value1\", \"key2\": false, \"key3\": [1, 2, 3]}");
     std::cout << out_obj << std::endl;
+}
+
+void test2(std::string test_lit, int flag){
+    //test parse
+    std::string err_com;
+    //std::string test_lit = "null";
+    Json ret = Json::parse(test_lit, err_com);
+    if (err_com.size())
+        std::cout << err_com << std::endl;
+        return;
+    if (flag==1)
+        JSON11_TEST_ASSERT(ret.is_null());
+    if (flag==2)
+        JSON11_TEST_ASSERT(ret.is_bool());
+}
+
+
+int main()
+{
+    Json js("asdwq1");
+    JSON11_TEST_ASSERT(js.is_string());
+    std::string out;
+    std::map<std::string, Json> m1 { { "k1", js } };
+
+    Json my_json(m1);
+    my_json.serialize(out);
+    JSON11_TEST_ASSERT(out=="{\"k1\": \"asdwq1\"}");
+
+    TEST_OBJ_AND_ARRAY;
+    TEST_PARSE_NULL;
+    TEST_PARSE_BOOL1;
+    TEST_PARSE_BOOL2;
+
     return 0;
 }

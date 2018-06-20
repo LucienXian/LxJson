@@ -91,7 +91,7 @@ public:
     }
 
     //parse the c++ string, if error happens, storage the message in the err
-    static Json parse(const std::string &in, std::string& err);
+    static Json parse(const std::string &in, std::string& err) noexcept;
     static Json parse(const char* in, std::string& err){
         if (in)
             return parse(std::string(in), err);

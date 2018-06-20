@@ -1,6 +1,8 @@
 #include "json.hpp"
 #include <cstdio>
 #include <stdexcept> //for runtime error
+#include <cstring>
+#include <iostream>
 
 namespace lxjson{
 
@@ -294,21 +296,51 @@ void Json::serialize(std::string &out) const{
 
 
 //todo:
-class Parser;
-/*
-Json Json::parse(const string &in, string &err) {
+class jParser final {
+public:
+    jParser(const string& s) : start_(s.c_str()), pos_(s.c_str()){}
+    Json parse(){
+        switch(*start_){
+            case 'n':
+                return parseLiteral("null", Json(nullptr));
+            case 't':
+                return parseLiteral("true", Json(true));
+            case 'f':
+                return parseLiteral("false", Json(false));
+            default:
+                //todo
+                return json_null;
+        }
+    }
+private:
+    const char* start_;
+    const char* pos_;
+    void skipSpace(){
+        while (*pos_ == ' ' || *pos_ == '\t' || *pos_ == '\r' || *pos_ == '\n')
+            pos_++;
+        start_ = pos_;
+    }
+    Json parseLiteral(const string &expected, Json res){
+        if (strncmp(pos_, expected.c_str(), expected.size()))
+            throw std::runtime_error(("Expected string ") + expected + (" but failed!"));
+        pos_ += expected.size();
+        return res;
+    }
+};
+
+
+
+Json Json::parse(const string &in, string &err) noexcept{
     try {
-        int i=0;
-        //Parser p(in);
-        //return p.parse();
+        jParser p(in);
+        return p.parse();
     } catch (std::runtime_error& e) {
-        //std::runtime_error& e;
         err = e.what();
-        return json_null;
+        //std::cout << err << std::endl;
+        return Json(nullptr);
     }
 
 }
-*/
 
 
 }
