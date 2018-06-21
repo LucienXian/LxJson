@@ -9,6 +9,7 @@
 #define TEST_PARSE_NULL test2("null", 1)
 #define TEST_PARSE_BOOL1 test2("true", 2)
 #define TEST_PARSE_BOOL2 test2("false", 2)
+#define TEST_PARSE_STRING(str) test3(str)
 
 using namespace lxjson;
 
@@ -35,13 +36,25 @@ void test2(std::string test_lit, int flag){
     std::string err_com;
     //std::string test_lit = "null";
     Json ret = Json::parse(test_lit, err_com);
-    if (err_com.size())
+    if (err_com.size()){
         std::cout << err_com << std::endl;
         return;
+    }
     if (flag==1)
         JSON11_TEST_ASSERT(ret.is_null());
     if (flag==2)
         JSON11_TEST_ASSERT(ret.is_bool());
+}
+
+void test3(std::string test) {
+    std::string err_com;
+    Json ret = Json::parse(test, err_com);
+    if (err_com.size()){
+        std::cout << err_com << std::endl;
+        return;
+    }
+    JSON11_TEST_ASSERT(ret.is_string());
+    std::cout << ret.string_value().data() << std::endl;
 }
 
 
@@ -61,5 +74,7 @@ int main()
     TEST_PARSE_BOOL1;
     TEST_PARSE_BOOL2;
 
+    TEST_PARSE_STRING(R"("Hell\u00F6")");
+    
     return 0;
 }

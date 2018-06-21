@@ -10,9 +10,8 @@ using std::string;
 using std::vector;
 using std::map;
 
-static const Json json_null;
+static const Json json_null; // internal linkage
 
-//todo:
 static void serialize(std::nullptr_t, string &out){
     out+="null";
 }
@@ -307,6 +306,9 @@ public:
                 return parseLiteral("true", Json(true));
             case 'f':
                 return parseLiteral("false", Json(false));
+                //break;
+            case '\"':
+                return parseString();
             default:
                 //todo
                 return json_null;
@@ -326,6 +328,153 @@ private:
         pos_ += expected.size();
         return res;
     }
+
+    string parse4hex() {
+        string res;
+        uint16_t ch16;
+        size_t convSize;
+        do{
+            if (strncmp(pos_, "\\u", 2))
+                throw std::runtime_error("Expected `\\uXXXX` escape sequence at position " + std::to_string(pos_-start_));
+            pos_ += 2;
+            if (sscanf(pos_, "%04hx", &ch16) != 1)
+                throw std::runtime_error("Expected 4 hexadecimal digit sequence at position " + std::to_string((pos_ - start_)));
+            convSize = utf16_to_utf8(ch16, res);
+            if (convSize == static_cast<size_t>(-1))
+                throw std::runtime_error("Bad utf-16 code point at position " + std::to_string(pos_ - start_));
+            pos_ += 4;
+        }while (!convSize);
+        return res;
+    }
+
+    //reference: https://github.com/MichaelSuen-thePointer/SimpleJSON/blob/master/SimpleJSON/jparser.cpp
+    size_t utf16_to_utf8(char16_t c16, std::string& s)
+    {
+        int nextra;
+
+        static struct internal_state_t
+        {
+            unsigned long _wchar;
+            unsigned short _byte, _state;
+        } pst{};
+
+        char state = static_cast<char>(pst._state); /* number of extra words expected */
+        unsigned long wc = pst._wchar; /* cumulative character */
+
+        if (state != 0)
+        { /* fold in second word and convert */
+            if (c16 < 0xdc00 || 0xe000 <= c16)
+            {
+                pst = {};
+                return static_cast<size_t>(-1); /* invalid second word */
+            }
+            pst._state = 0;
+            wc |= static_cast<unsigned long>(c16 - 0xdc00);
+        }
+        else if (c16 < 0xd800 || 0xdc00 <= c16)
+        {
+            wc = static_cast<unsigned long>(c16); /* not first word */
+        }
+        else
+        { /* save value bits of first word for later */
+            pst._state = 1;
+            pst._wchar = static_cast<unsigned long>((c16 - 0xd800 + 0x0040) << 10);
+            return (0);
+        }
+
+        if ((wc & ~0x7fUL) == 0)
+        { /* generate a single byte */
+            s += static_cast<unsigned char>(wc);
+            nextra = 0;
+        }
+        else if ((wc & ~0x7ffUL) == 0)
+        { /* generate two bytes */
+            s += static_cast<unsigned char>(0xc0 | wc >> 6);
+            nextra = 1;
+        }
+        else if ((wc & ~0xffffUL) == 0)
+        { /* generate three bytes */
+            s += static_cast<unsigned char>(0xe0 | wc >> 12);
+            nextra = 2;
+        }
+        else if ((wc & ~0x1fffffUL) == 0)
+        { /* generate four bytes */
+            s += static_cast<unsigned char>(0xf0 | wc >> 18);
+            nextra = 3;
+        }
+        else if ((wc & ~0x3ffffffUL) == 0)
+        { /* generate five bytes */
+            s += static_cast<unsigned char>(0xf8 | wc >> 24);
+            nextra = 4;
+        }
+        else
+        { /* generate six bytes */
+            s += static_cast<unsigned char>(0xfc | ((wc >> 30) & 0x03));
+            nextra = 5;
+        }
+
+        for (int i = nextra; i > 0; --i)
+        {
+            s += static_cast<unsigned char>(0x80 | ((wc >> 6 * (i - 1)) & 0x3f));
+        }
+        return nextra + 1;
+    }
+
+
+    void encode_utf8(char c, string& out){
+        switch(c){
+            case '\"' : case '\\': case '/':
+                out.push_back(c);
+                break;
+            case 'b':
+                out.push_back('\b');
+                break;
+            case 't':
+                out.push_back('\t');
+                break;
+            case 'f':
+                out.push_back('\f');
+                break;
+            case 'n':
+                out.push_back('\n');
+                break;
+            case 'r':
+                out.push_back('\r');
+                break;
+            case 'u':
+                --pos_;
+                out += parse4hex();
+                --pos_;
+                break;
+            default:;
+        }
+    }
+
+
+
+    Json parseString(){
+        string out;
+        while(true){
+            char c = *(++pos_);//get the current char
+            switch(c){
+                case '\"':
+                    start_ = ++pos_;
+                    return Json(out);
+                case '\0':
+                    throw std::runtime_error("MISSING QUOTATION MARK!");
+                case '\\':
+                    encode_utf8(*++pos_, out);
+                    break;
+                default:
+                    if (static_cast<unsigned char>(c) < 0x20)
+                        throw std::runtime_error("INVALID STRING CHARACTER!");
+                    out.push_back(c);
+            }
+        }
+        return Json(out);
+    }
+
+
 };
 
 
