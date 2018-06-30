@@ -10,6 +10,7 @@
 #define TEST_PARSE_BOOL1 test2("true", 2)
 #define TEST_PARSE_BOOL2 test2("false", 2)
 #define TEST_PARSE_STRING(str) test3(str)
+#define TEST_PARSE_NUMBER test4()
 
 using namespace lxjson;
 
@@ -57,6 +58,22 @@ void test3(std::string test) {
     std::cout << ret.string_value().data() << std::endl;
 }
 
+void test4() {
+    std::string err_com;
+    //std::string test = R"(12E+2)";
+    //std::string test = R"(12e-2)";
+    //std::string test = R"(12.123)";
+    std::string test = R"(120)";
+    //std::string test = R"(012)"; error
+    Json ret = Json::parse(test, err_com);
+    if (err_com.size()){
+        std::cout << err_com << std::endl;
+        return;
+    }
+    JSON11_TEST_ASSERT(ret.is_number());
+    std::cout << ret.double_value() << std::endl;
+}
+
 
 int main()
 {
@@ -69,12 +86,14 @@ int main()
     my_json.serialize(out);
     JSON11_TEST_ASSERT(out=="{\"k1\": \"asdwq1\"}");
 
+    /*
     TEST_OBJ_AND_ARRAY;
     TEST_PARSE_NULL;
     TEST_PARSE_BOOL1;
-    TEST_PARSE_BOOL2;
+    TEST_PARSE_BOOL2;*/
+    TEST_PARSE_NUMBER;
 
-    TEST_PARSE_STRING(R"("Hell\u00F6")");
+    //TEST_PARSE_STRING(R"("Hell\u00F6")");
     
     return 0;
 }

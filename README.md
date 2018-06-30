@@ -11,4 +11,8 @@
 * nullptr_t
 * runtime_error
 * noexcept
+* std::numeric_limits<T>
+* raw string
 
+其它库函数
+* strtod

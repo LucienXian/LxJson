@@ -3,6 +3,8 @@
 #include <stdexcept> //for runtime error
 #include <cstring>
 #include <iostream>
+#include <cmath>
+#include <limits>
 
 namespace lxjson{
 
@@ -87,6 +89,11 @@ static void serialize(const Json::object &values, string &out){
         isFirst = false;
     }
     out += "}";
+}
+
+//一般情况下不会产生函数本身的代码，而是全部被嵌入在被调用的地方，减小可执行文件
+static inline bool in_range(int x, int lower, int upper){
+    return (x >= lower && x <= upper);
 }
 
 //JsonValue
@@ -309,9 +316,12 @@ public:
                 //break;
             case '\"':
                 return parseString();
+            case '\0':
+                std::runtime_error("Unexpected end");
             default:
                 //todo
-                return json_null;
+                return parseNum();
+                //return json_null;
         }
     }
 private:
@@ -473,6 +483,43 @@ private:
         }
         return Json(out);
     }
+
+    Json parseNum() {
+        if (*pos_ == '-') ++pos_;
+
+        //Integer part
+        if (*pos_ == '0') {
+            ++pos_;
+            if (in_range(*pos_, '0', '9'))
+                throw std::runtime_error("INVALID! leading 0s not permitted in numbers");
+        }
+        else {
+            if (!in_range(*pos_, '1', '9')) throw std::runtime_error("INVALID! leading 0s not permitted in numbers");
+            while (in_range(*(++pos_), '0', '9'));
+        }
+
+        //demical part
+        if (*pos_ == '.') {
+            if (!in_range(*++pos_, '0', '9')) throw std::runtime_error("INVALID FLOAT");
+            while (in_range(*(++pos_), '0', '9'));
+        }
+
+        //Exponent part
+        if (*pos_=='e'||*pos_=='E') {
+            pos_++;
+            if (*pos_=='-'||*pos_=='+') pos_++;
+            if (!in_range(*pos_, '0', '9')) throw std::runtime_error("INVALID EXPONENT");
+            while (in_range(*(++pos_), '0', '9'));
+        }
+
+        double val = std::strtod(start_, nullptr);
+        if (std::fabs(val) == std::numeric_limits<double>::max())
+            throw std::runtime_error("DOUBLE OVERFLOW");
+        start_ = pos_;
+        return Json(val);
+    }
+
+
 
 
 };
