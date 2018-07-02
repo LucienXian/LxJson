@@ -4,6 +4,7 @@
 #include <vector>
 #include <cassert>
 
+
 #define JSON11_TEST_ASSERT(b) assert(b)
 #define TEST_OBJ_AND_ARRAY test1()
 #define TEST_PARSE_NULL test2("null", 1)
@@ -11,6 +12,7 @@
 #define TEST_PARSE_BOOL2 test2("false", 2)
 #define TEST_PARSE_STRING(str) test3(str)
 #define TEST_PARSE_NUMBER test4()
+#define TEST_PARSE_ARRAY test5()
 
 using namespace lxjson;
 
@@ -74,6 +76,20 @@ void test4() {
     std::cout << ret.double_value() << std::endl;
 }
 
+void test5() {
+    std::string err_com;
+    std::string test = R"(["a",123,[true,false,null]])";
+     Json ret = Json::parse(test, err_com);
+    if (err_com.size()){
+        std::cout << err_com << std::endl;
+        return;
+    }
+    JSON11_TEST_ASSERT(ret.is_array());
+    std::cout << ret.array_value()[0].string_value() << std::endl;
+    std::cout << ret.array_value()[1].double_value() << std::endl;
+    JSON11_TEST_ASSERT(ret.array_value()[2].is_array());
+}
+
 
 int main()
 {
@@ -91,9 +107,10 @@ int main()
     TEST_PARSE_NULL;
     TEST_PARSE_BOOL1;
     TEST_PARSE_BOOL2;*/
-    TEST_PARSE_NUMBER;
+    //TEST_PARSE_NUMBER;
 
     //TEST_PARSE_STRING(R"("Hell\u00F6")");
+    TEST_PARSE_ARRAY;
     
     return 0;
 }

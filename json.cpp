@@ -316,6 +316,8 @@ public:
                 //break;
             case '\"':
                 return parseString();
+            case '[':
+                return parseArray();
             case '\0':
                 std::runtime_error("Unexpected end");
             default:
@@ -332,6 +334,7 @@ private:
             pos_++;
         start_ = pos_;
     }
+
     Json parseLiteral(const string &expected, Json res){
         if (strncmp(pos_, expected.c_str(), expected.size()))
             throw std::runtime_error(("Expected string ") + expected + (" but failed!"));
@@ -517,6 +520,29 @@ private:
             throw std::runtime_error("DOUBLE OVERFLOW");
         start_ = pos_;
         return Json(val);
+    }
+
+    Json parseArray(){
+        lxjson::Json::array data;
+        pos_++; //skip '['
+        skipSpace();
+        if (*pos_ == ']') {
+            start_ = ++pos_;
+            return Json(data);
+        }
+        while(true) {
+            skipSpace();
+            data.push_back(this->parse());
+            skipSpace();
+
+            if (*pos_ == ']') {
+                start_ = ++pos_;
+                return Json(data);
+            }
+            if (*pos_ != ',') throw std::runtime_error("expected ',' in list, got " + *pos_);
+            pos_++; 
+        }
+        return Json(nullptr);
     }
 
 
