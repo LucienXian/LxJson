@@ -318,6 +318,8 @@ public:
                 return parseString();
             case '[':
                 return parseArray();
+            case '{':
+                return parseObject();
             case '\0':
                 std::runtime_error("Unexpected end");
             default:
@@ -326,14 +328,18 @@ public:
                 //return json_null;
         }
     }
-private:
-    const char* start_;
-    const char* pos_;
     void skipSpace(){
         while (*pos_ == ' ' || *pos_ == '\t' || *pos_ == '\r' || *pos_ == '\n')
             pos_++;
         start_ = pos_;
     }
+
+    char get_pos(){
+        return *pos_;
+    }
+private:
+    const char* start_;
+    const char* pos_;
 
     Json parseLiteral(const string &expected, Json res){
         if (strncmp(pos_, expected.c_str(), expected.size()))
@@ -497,7 +503,7 @@ private:
                 throw std::runtime_error("INVALID! leading 0s not permitted in numbers");
         }
         else {
-            if (!in_range(*pos_, '1', '9')) throw std::runtime_error("INVALID! leading 0s not permitted in numbers");
+            if (!in_range(*pos_, '1', '9')) {throw std::runtime_error("INVALID value");}
             while (in_range(*(++pos_), '0', '9'));
         }
 
@@ -545,7 +551,37 @@ private:
         return Json(nullptr);
     }
 
+    Json parseObject(){
+        lxjson::Json::object data;
+        pos_++;
+        skipSpace();
+        if (*pos_ == '}') {
+            start_ = ++pos_;
+            return Json(data);
+        }
+        while(true) {
+            skipSpace();
+            if (*pos_!='"') throw std::runtime_error("expected '\"' in object, got " + *pos_);
+            Json key_json = parseString();
+            if (!key_json.is_string()) return Json();
+            string key = key_json.string_value();
 
+            skipSpace();
+            if (*pos_++ != ':') throw std::runtime_error("expected ':' in object, got " + *pos_);
+            skipSpace();
+
+            data.insert({std::move(key), parse()}); //insert can tell whether the element is inserted into the map. 
+            skipSpace();
+
+            if (*pos_ == ',') ++pos_;
+            else if (*pos_ == '}') {
+                start_ = ++pos_;
+                break;
+            }
+            else throw std::runtime_error("miss curly bracket");
+        }
+        return Json(data);
+    }
 
 
 };
@@ -555,7 +591,11 @@ private:
 Json Json::parse(const string &in, string &err) noexcept{
     try {
         jParser p(in);
-        return p.parse();
+        p.skipSpace();
+        Json result = p.parse();
+        p.skipSpace();
+        if (p.get_pos()) throw std::runtime_error("unexpected trailing " + p.get_pos());
+        return result;
     } catch (std::runtime_error& e) {
         err = e.what();
         //std::cout << err << std::endl;

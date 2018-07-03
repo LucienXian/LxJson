@@ -13,6 +13,7 @@
 #define TEST_PARSE_STRING(str) test3(str)
 #define TEST_PARSE_NUMBER test4()
 #define TEST_PARSE_ARRAY test5()
+#define TEST_PARSE_OBJECT test6()
 
 using namespace lxjson;
 
@@ -90,6 +91,21 @@ void test5() {
     JSON11_TEST_ASSERT(ret.array_value()[2].is_array());
 }
 
+void test6() {
+    std::string err_com;
+    std::string test = R"( {"k1":"v1", "k2":42, "k3":["a",123,true,false,null]} )";
+     Json ret = Json::parse(test, err_com);
+    if (err_com.size()){
+        std::cout << err_com << std::endl;
+        return;
+    }
+    JSON11_TEST_ASSERT(ret.is_object());
+    auto m = ret.object_value();
+    std::cout << m.at("k1").string_value() << std::endl;
+    std::cout << m.at("k2").double_value() << std::endl;
+    JSON11_TEST_ASSERT(m.at("k3").is_array());
+}
+
 
 int main()
 {
@@ -110,7 +126,8 @@ int main()
     //TEST_PARSE_NUMBER;
 
     //TEST_PARSE_STRING(R"("Hell\u00F6")");
-    TEST_PARSE_ARRAY;
+    //TEST_PARSE_ARRAY;
+    TEST_PARSE_OBJECT;
     
     return 0;
 }
