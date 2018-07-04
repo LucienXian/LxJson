@@ -94,7 +94,7 @@ void test5() {
 void test6() {
     std::string err_com;
     std::string test = R"( {"k1":"v1", "k2":42, "k3":["a",123,true,false,null]} )";
-     Json ret = Json::parse(test, err_com);
+    Json ret = Json::parse(test, err_com);
     if (err_com.size()){
         std::cout << err_com << std::endl;
         return;
@@ -109,6 +109,7 @@ void test6() {
 
 int main()
 {
+    /*
     Json js("asdwq1");
     JSON11_TEST_ASSERT(js.is_string());
     std::string out;
@@ -117,6 +118,7 @@ int main()
     Json my_json(m1);
     my_json.serialize(out);
     JSON11_TEST_ASSERT(out=="{\"k1\": \"asdwq1\"}");
+    */
 
     /*
     TEST_OBJ_AND_ARRAY;
@@ -127,7 +129,30 @@ int main()
 
     //TEST_PARSE_STRING(R"("Hell\u00F6")");
     //TEST_PARSE_ARRAY;
-    TEST_PARSE_OBJECT;
+    //TEST_PARSE_OBJECT;
+
+    std::string out_obj;
+    Json j_arr = Json(Json::array{Json(1), Json(2), Json(3)});
+
+    Json j_obj(Json::object {
+        { "key1",    Json("value1") },
+        { "key2", Json(false) },
+        { "key3", j_arr },
+    });
+
+    j_obj.serialize(out_obj);
+
+    std::cout << out_obj << std::endl;
+
+    std::string err_com;
+    Json ret = Json::parse(out_obj, err_com);
+    if (err_com.size()){
+        std::cout << err_com << std::endl;
+        return 0;
+    }
+    JSON11_TEST_ASSERT(ret.is_object());
+
+
     
     return 0;
 }
